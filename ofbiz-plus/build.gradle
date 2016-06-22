@@ -1,0 +1,26 @@
+apply plugin: 'java'
+
+ext{
+   ofbiz_base = '../apache-ofbiz-12.04.06'
+   //ofbiz_base = '../apache-ofbiz-13.07.03'
+}
+
+jar {
+    baseName = 'ofbiz-plus'
+    version =  '0.1-SNAPSHOT'
+}
+repositories {
+    mavenCentral()
+    //maven { url "http://repo.spring.io/snapshot" }
+    //maven { url "http://repo.spring.io/milestone" }
+}
+dependencies {
+    compile fileTree(dir: 'lib', include: '*.jar')
+    compile fileTree(dir: ofbiz_base+'/framework/base/lib', include: '*.jar')
+    compile fileTree(dir: ofbiz_base+'/framework/base/build/lib', include: '*.jar')
+    compile fileTree(dir: ofbiz_base+'/framework/catalina/lib', include: '*.jar')
+    compile fileTree(dir: ofbiz_base+'/framework/catalina/build/lib', include: '*.jar')
+    compile fileTree(dir: ofbiz_base+'/framework/entity/build/lib', include: '*.jar')   
+    
+    //compile("org.springframework.boot:spring-boot-starter-web")
+}
