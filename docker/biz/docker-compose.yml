@@ -1,0 +1,36 @@
+
+ofbiz:
+  restart: always
+  image: 
+  links:
+    - redis:redis
+    - mysql:mysql
+  ports:
+    - "6080:8080"
+    - "6443:8443"
+  environment:
+    - DEBUG=false
+    - TZ=Asia/Beijing
+  volumes:
+    - /data/biz/ofbiz/framework/entity/config:/usr/src/ofbiz/framework/entity/config
+    - /data/biz/ofbiz/runtime:/usr/src/ofbiz/runtime
+mysql:
+  restart: always
+  image: mysql:latest
+  ports:
+  - "3306:3306"
+  environment:
+  - MYSQL_ROOT_PASSWORD=open2016
+  - MYSQL_DATABASE=dev-agile
+  - MYSQL_USER=dev
+  - MYSQL_PASSWORD=dev2016
+  volumes:
+    - /data/biz/mysql:/var/lib/mysql
+redis:
+  restart: always
+  image: sameersbn/redis:latest
+  ports:
+    - "6379:6379"
+  volumes:
+    - /data/biz/redis:/var/lib/redis
+
