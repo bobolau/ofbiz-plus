@@ -177,7 +177,7 @@ public class RedisCacheManager {
 		}
 	}
 
-	private void initializeDatabaseConnection() {
+	void initializeDatabaseConnection() {
 		try {
 			if (getSentinelMaster() != null) {
 				Set<String> sentinelSet = getSentinelSet();

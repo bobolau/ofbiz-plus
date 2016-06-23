@@ -1,5 +1,6 @@
 package org.ofbiz.base.cache.redis;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,8 @@ import org.ofbiz.entity.GenericPK;
 import org.ofbiz.entity.GenericValue;
 import org.ofbiz.entity.condition.EntityCondition;
 import org.ofbiz.entity.model.ModelField;
+
+import redis.clients.jedis.Jedis;
 
 @SuppressWarnings("serial")
 public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Serializable {
@@ -92,6 +95,76 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 		return null;
 	}
 
+	protected Object redisGet(String key) {
+		Jedis jedis = null;
+		Boolean error = true;
+		try {
+			jedis = acquireRedisConnection();
+			error = false;
+			return null;
+
+		} finally {
+			if (jedis != null) {
+				returnRedisConnection(jedis, error);
+			}
+		}
+	}
+
+	protected Object redisPut(String key, Object value) {
+		return null;
+	}
+
+	protected void redisClearKeyStartwith(String key) {
+		Jedis jedis = null;
+		Boolean error = true;
+		try {
+			jedis = acquireRedisConnection();
+			Set<String> keySet = jedis.keys(key + "*");
+			error = false;
+			for (String kk : keySet) {
+				jedis.del(kk);
+			}
+		} finally {
+			if (jedis != null) {
+				returnRedisConnection(jedis, error);
+			}
+		}
+
+	}
+
+	protected Object redisRemove(String key) {
+		return null;
+	}
+
+	protected void redisClear() {
+		Jedis jedis = null;
+		Boolean error = true;
+		try {
+			jedis = acquireRedisConnection();
+			jedis.flushDB();
+			error = false;
+		} finally {
+			if (jedis != null) {
+				returnRedisConnection(jedis, error);
+			}
+		}
+	}
+
+	public String[] keysRedis() throws IOException {
+		Jedis jedis = null;
+		Boolean error = true;
+		try {
+			jedis = acquireRedisConnection();
+			Set<String> keySet = jedis.keys("*");
+			error = false;
+			return keySet.toArray(new String[keySet.size()]);
+		} finally {
+			if (jedis != null) {
+				returnRedisConnection(jedis, error);
+			}
+		}
+	}
+
 	////////////////////////////////////////////////////////////////////
 
 	protected boolean isConditionCache(Object key) {
@@ -126,37 +199,13 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 	}
 
 	protected void setPropertiesParams(String[] propNames) {
-		ResourceBundle res = ResourceBundle.getBundle("cache");
+		ResourceBundle res = getCacheResource();
 		if (res != null) {
 			String value = getPropertyParam(res, propNames, "expireTime");
 			if (UtilValidate.isNotEmpty(value)) {
 				this.expireTimeNanos = TimeUnit.NANOSECONDS.convert(Long.parseLong(value), TimeUnit.MILLISECONDS);
 			}
 		}
-	}
-
-	protected static String getPropertyParam(ResourceBundle res, String[] propNames, String parameter) {
-		try {
-			for (String propName : propNames) {
-				if (res.containsKey(propName + '.' + parameter)) {
-					try {
-						return res.getString(propName + '.' + parameter);
-					} catch (MissingResourceException e) {
-					}
-				}
-			}
-			// don't need this, just return null
-			// if (value == null) {
-			// throw new MissingResourceException("Can't find resource for
-			// bundle", res.getClass().getName(), Arrays.asList(propNames) + "."
-			// + parameter);
-			// }
-		} catch (Exception e) {
-			Debug.logWarning(e,
-					"Error getting " + parameter + " value from cache.properties file for propNames: " + propNames,
-					module);
-		}
-		return null;
 	}
 
 }
