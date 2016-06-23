@@ -1,0 +1,3 @@
+readme: please config ofbiz_version in build.gradle
+unzip /download/apache-ofbiz-13.07.03.zip
+the dest direction is  /ofbiz/apache-ofbiz-13.07.03
