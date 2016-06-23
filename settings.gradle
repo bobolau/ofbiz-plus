@@ -1,1 +1,7 @@
-include 'ofbiz-plus'
+include 'ofbiz-plus:tomcat-session-redis', 'ofbiz-plus:entity-cache-redis'
+
+project(':ofbiz-plus:tomcat-session-redis').name = 'ofbiz-tomcat-session-redis'
+//project(':ofbiz-plus:tomcat-session-redis').buildFileName = 'ofbiz-tomcat-session-redis'
+
+project(':ofbiz-plus:entity-cache-redis').name = 'ofbiz-entity-cache-redis'
+//project(':ofbiz-plus:entity-cache-redis').buildFileName = 'ofbiz-entity-cache-redis'

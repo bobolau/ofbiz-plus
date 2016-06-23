@@ -1,3 +1,4 @@
+#java
 *.class
 
 # Mobile Tools for Java (J2ME)
@@ -18,5 +19,9 @@ hs_err_pid*
 .settings/
 .project
 .classpath
+
+# gradle
+.gradle
+**/.gitignore
 
 /build/
