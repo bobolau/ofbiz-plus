@@ -1,5 +1,15 @@
 // agileBiz
 
+
+ext{
+
+   //ofbiz config
+   //ofbiz_version = '12.04.06' 
+   ofbiz_version = '13.07.03'
+   ofbiz_download_url = 'http://mirror.bit.edu.cn/apache/ofbiz/apache-ofbiz-'+ofbiz_version+'.zip'
+   ofbiz_base = '../ofbiz/apache-ofbiz-'+ofbiz_version
+}
+
 buildscript {
     repositories {
 	    mavenCentral()
