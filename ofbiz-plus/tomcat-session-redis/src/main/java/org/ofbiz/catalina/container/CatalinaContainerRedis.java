@@ -29,6 +29,7 @@ import org.apache.tomcat.JarScanner;
 import org.apache.tomcat.util.scan.StandardJarScanner;
 import org.ofbiz.base.component.ComponentConfig;
 import org.ofbiz.base.container.ClassLoaderContainer;
+import org.ofbiz.base.container.Container;
 import org.ofbiz.base.container.ContainerConfig;
 import org.ofbiz.base.container.ContainerConfig.Container.Property;
 import org.ofbiz.base.container.ContainerException;
@@ -40,13 +41,18 @@ import org.ofbiz.catalina.tomcat.redissessions.RedisSessionHandlerValve;
 import org.ofbiz.catalina.tomcat.redissessions.RedisSessionManager;
 import org.w3c.dom.Document;
 
-public class CatalinaContainerRedis extends CatalinaContainer {
+/**
+ * CatalinaContainer with redis session management and config redis paramter
+ * with cluster properties.
+ *
+ */
+public class CatalinaContainerRedis extends CatalinaContainer implements Container {
 
-	protected boolean useClusterRedis = true;
+	protected boolean useRedis = true;
 
 	protected Cluster createCluster(ContainerConfig.Container.Property clusterProps, Host host)
 			throws ContainerException {
-		if (useClusterRedis) {
+		if (useRedis) {
 			// nothing, cluster by session redis
 			return null;
 		}
@@ -152,7 +158,7 @@ public class CatalinaContainerRedis extends CatalinaContainer {
 		// redis session manager
 		Manager sessionMgr = null;
 		Valve sessionValue = null;
-		if (useClusterRedis) {
+		if (useRedis) {
 			sessionMgr = new RedisSessionManager();
 			sessionValue = new RedisSessionHandlerValve();
 			((RedisSessionHandlerValve) sessionValue).setRedisSessionManager((RedisSessionManager) sessionMgr);
