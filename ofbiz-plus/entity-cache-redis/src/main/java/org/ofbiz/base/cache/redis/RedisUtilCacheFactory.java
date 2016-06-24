@@ -23,10 +23,6 @@ public class RedisUtilCacheFactory {
 	RedisUtilCacheFactory() {
 	}
 
-	private Map utilCacheTable() {
-		return this.utilCacheTable;
-	}
-
 	private void init() {
 		if (redisCacheManager == null) {
 			initRedis();
