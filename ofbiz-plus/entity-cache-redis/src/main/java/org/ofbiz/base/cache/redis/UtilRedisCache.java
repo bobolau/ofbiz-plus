@@ -12,19 +12,23 @@ import java.util.concurrent.TimeUnit;
 
 import org.ofbiz.base.util.Debug;
 import org.ofbiz.base.util.UtilValidate;
+import org.ofbiz.entity.GenericEntity;
 import org.ofbiz.entity.GenericPK;
 import org.ofbiz.entity.GenericValue;
 import org.ofbiz.entity.condition.EntityCondition;
 import org.ofbiz.entity.model.ModelField;
+import org.ofbiz.base.util.cache.UtilCache;
 
 import redis.clients.jedis.Jedis;
 
 @SuppressWarnings("serial")
-public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Serializable {
+public class UtilRedisCache<K, V>
+		// extends UtilCache<K, V>
+		extends UtilRedisCacheFactory implements Serializable {
 
 	private static final long serialVersionUID = -6583046019268551550L;
 
-	public static final String module = RedisUtilCache.class.getName();
+	public static final String module = UtilRedisCache.class.getName();
 
 	/**
 	 * The name of the UtilCache instance, is also the key for the instance in
@@ -38,7 +42,8 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 	 */
 	protected long expireTimeNanos = 0;
 
-	RedisUtilCache(String cacheName, String... propNames) {
+	UtilRedisCache(String cacheName, String... propNames) {
+		super();
 		this.name = cacheName;
 		setPropertiesParams(propNames);
 	}
@@ -59,23 +64,33 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 		return (V) redisDel(getRedisKey(key));
 	}
 
+	public V remove(EntityCondition conditionKey, Object key) {
+		return (V) redisDel(getRedisKey(conditionKey, key));
+	}
+
+	public V get(Object key) {
+		V value = (V) redisGet(getRedisKey(key));
+		return value;
+	}
+
+	public V get(EntityCondition conditionKey, Object key) {
+		V value = (V) redisGet(getRedisKey(conditionKey, key));
+		return value;
+	}
+
+	public V put(K key, V value) {
+		return (V) redisSet(getRedisKey(key), value, expireTimeNanos);
+	}
+	
+	public V put(EntityCondition conditionKey, K key, V value) {
+		return (V) redisSet(getRedisKey(conditionKey, key), value, expireTimeNanos);
+	}
+	
 	/**
 	 * @deprecated this method for ofbiz origin cache
 	 */
 	public Set<? extends K> getCacheLineKeys() {
 		throw new UnsupportedOperationException("getCacheLineKeys in cache by redis");
-	}
-
-	public V get(Object key) {
-		// EntityCache: GenericValue
-		// ConditionCache: Map<Object, List<GenericValue>>, Map<Object, Object>
-		return (V) redisGet(getRedisKey(key));
-	}
-
-	public V put(K key, V value) {
-		// value: GenericValue
-		// value: Map<Object, List<GenericValue>>, Map<Object, Object>
-		return (V) redisSet(getRedisKey(key), value, expireTimeNanos);
 	}
 
 	protected Object redisGet(String key) {
@@ -84,7 +99,10 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 		try {
 			jedis = acquireRedisConnection();
 			error = false;
-			return unserialize(jedis.get(key.getBytes()));
+			Object value = deserialize(jedis.get(key.getBytes()));
+			if (Debug.verboseOn())
+				Debug.logVerbose("redis get with key [" + key + "], result is [" + value + "]", "redis");
+			return value;
 		} finally {
 			if (jedis != null) {
 				returnRedisConnection(jedis, error);
@@ -100,8 +118,11 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 			error = false;
 			String obj = jedis.set(key.getBytes(), serialize(value));
 			if (milliseconds > 0) {
-				jedis.pexpire(key, milliseconds);
+				jedis.pexpire(key.getBytes(), milliseconds);
 			}
+			if (Debug.verboseOn())
+				Debug.logVerbose("redis set with key [" + key + "], value is [" + value + "]"
+						+ (milliseconds > 0 ? ", expire [" + milliseconds + "] millisends" : ""), "redis");
 			return value;
 		} finally {
 			if (jedis != null) {
@@ -117,6 +138,8 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 			jedis = acquireRedisConnection();
 			Set<String> keySet = jedis.keys(key + "*");
 			error = false;
+			if (Debug.verboseOn())
+				Debug.logVerbose("redis clear start with key [" + key + "]", "redis");
 			for (String kk : keySet) {
 				jedis.del(kk);
 			}
@@ -134,8 +157,10 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 		try {
 			jedis = acquireRedisConnection();
 			error = false;
-			Object oldValue = unserialize(jedis.get(key.getBytes()));
+			Object oldValue = deserialize(jedis.get(key.getBytes()));
 			jedis.del(key.getBytes());
+			if (Debug.verboseOn())
+				Debug.logVerbose("redis del with key [" + key + "]", "redis");
 			return oldValue;
 		} finally {
 			if (jedis != null) {
@@ -149,6 +174,8 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 		Boolean error = true;
 		try {
 			jedis = acquireRedisConnection();
+			if (Debug.verboseOn())
+				Debug.logVerbose("redis clear ...", "redis");
 			jedis.flushDB();
 			error = false;
 		} finally {
@@ -168,8 +195,16 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 		} else if (key instanceof EntityCondition) { // conditionKey
 			sb.append(((EntityCondition) key).toString()); // where
 		} else {
-			sb.append(key.toString());
+			sb.append(key);
 		}
+		return sb.toString();
+	}
+
+	protected String getRedisKey(EntityCondition conditionKey, Object key) {
+		StringBuffer sb = new StringBuffer();
+		sb.append(getKeyPrefix());
+		sb.append(conditionKey);
+		sb.append("_").append(key);
 		return sb.toString();
 	}
 

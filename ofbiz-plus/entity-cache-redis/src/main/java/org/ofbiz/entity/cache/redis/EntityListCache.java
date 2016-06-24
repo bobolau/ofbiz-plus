@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
+import org.ofbiz.base.cache.redis.UtilRedisCache;
 import org.ofbiz.base.util.Debug;
 import org.ofbiz.entity.GenericValue;
 import org.ofbiz.entity.condition.EntityCondition;
@@ -42,23 +43,10 @@ public class EntityListCache extends AbstractEntityConditionCache<Object, List<G
     }
 
     public List<GenericValue> get(String entityName, EntityCondition condition, List<String> orderBy) {
-        ConcurrentMap<Object, List<GenericValue>> conditionCache = getConditionCache(entityName, condition);
-        if (conditionCache == null) return null;
+    	UtilRedisCache<Object, List<GenericValue>> cache = getCache(entityName);
+        if (cache == null) return null;
         Object orderByKey = getOrderByKey(orderBy);
-        List<GenericValue> valueList = conditionCache.get(orderByKey);
-        if (valueList == null) {
-            // the valueList was not found for the given ordering, so grab the first one and order it in memory
-            Iterator<List<GenericValue>> it = conditionCache.values().iterator();
-            if (it.hasNext()) valueList = it.next();
-
-            if (valueList != null) {
-                // Does not need to be synchronized; if 2 threads do the same ordering,
-                // the result will be exactly the same, and won't actually cause any
-                // incorrect results.
-                valueList = EntityUtil.orderBy(valueList, orderBy);
-                conditionCache.put(orderByKey, valueList);
-            }
-        }
+        List<GenericValue> valueList = cache.get(condition, orderByKey);
         return valueList;
     }
 
@@ -75,8 +63,8 @@ public class EntityListCache extends AbstractEntityConditionCache<Object, List<G
         for (GenericValue memberValue : entities) {
             memberValue.setImmutable();
         }
-        Map<Object, List<GenericValue>> conditionCache = getOrCreateConditionCache(entityName, getFrozenConditionKey(condition));
-        return conditionCache.put(getOrderByKey(orderBy), entities);
+        UtilRedisCache<Object, List<GenericValue>> cache = getOrCreateCache(entityName);
+        return cache.put(getFrozenConditionKey(condition), getOrderByKey(orderBy), entities);
     }
 
     public List<GenericValue> remove(String entityName, EntityCondition condition, List<String> orderBy) {

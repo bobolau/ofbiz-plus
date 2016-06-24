@@ -18,7 +18,7 @@
  *******************************************************************************/
 package org.ofbiz.entity.cache.redis;
 
-import org.ofbiz.base.cache.redis.RedisUtilCache;
+import org.ofbiz.base.cache.redis.UtilRedisCache;
 //import org.ofbiz.base.util.cache.UtilCache;
 import org.ofbiz.entity.Delegator;
 import org.ofbiz.entity.DelegatorFactory;
@@ -37,11 +37,11 @@ public abstract class AbstractCache<K, V> {
 	}
 
 	public void remove(String entityName) {
-		RedisUtilCache.clearCache(getCacheName(entityName));
+		UtilRedisCache.clearCache(getCacheName(entityName));
 	}
 
 	public void clear() {
-		RedisUtilCache.clearCachesThatStartWith(getCacheNamePrefix());
+		UtilRedisCache.clearCachesThatStartWith(getCacheNamePrefix());
 	}
 
 	public String getCacheNamePrefix() {
@@ -69,11 +69,11 @@ public abstract class AbstractCache<K, V> {
 		return names;
 	}
 
-	protected RedisUtilCache<K, V> getCache(String entityName) {
-		return RedisUtilCache.findCache(getCacheName(entityName));
+	protected UtilRedisCache<K, V> getCache(String entityName) {
+		return UtilRedisCache.findCache(getCacheName(entityName));
 	}
 
-	protected RedisUtilCache<K, V> getOrCreateCache(String entityName) {
-		return RedisUtilCache.getOrCreateUtilCache(getCacheName(entityName), getCacheNames(entityName));
+	protected UtilRedisCache<K, V> getOrCreateCache(String entityName) {
+		return UtilRedisCache.getOrCreateUtilCache(getCacheName(entityName), getCacheNames(entityName));
 	}
 }

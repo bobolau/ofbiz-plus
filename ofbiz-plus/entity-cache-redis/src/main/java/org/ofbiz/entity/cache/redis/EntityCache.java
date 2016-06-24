@@ -20,7 +20,7 @@ package org.ofbiz.entity.cache.redis;
 
 import java.util.Iterator;
 
-import org.ofbiz.base.cache.redis.RedisUtilCache;
+import org.ofbiz.base.cache.redis.UtilRedisCache;
 import org.ofbiz.base.util.Debug;
 //import org.ofbiz.base.util.cache.UtilCache;
 import org.ofbiz.entity.GenericPK;
@@ -36,7 +36,7 @@ public class EntityCache extends AbstractCache<GenericPK, GenericValue> {
     }
 
     public GenericValue get(GenericPK pk) {
-        RedisUtilCache<GenericPK, GenericValue> entityCache = getCache(pk.getEntityName());
+        UtilRedisCache<GenericPK, GenericValue> entityCache = getCache(pk.getEntityName());
         if (entityCache == null) return null;
         return entityCache.get(pk);
     }
@@ -58,7 +58,7 @@ public class EntityCache extends AbstractCache<GenericPK, GenericValue> {
             // before going into the cache, make this value immutable
             entity.setImmutable();
         }
-        RedisUtilCache<GenericPK, GenericValue> entityCache = getOrCreateCache(pk.getEntityName());
+        UtilRedisCache<GenericPK, GenericValue> entityCache = getOrCreateCache(pk.getEntityName());
         return entityCache.put(pk, entity);
     }
 
@@ -79,7 +79,7 @@ public class EntityCache extends AbstractCache<GenericPK, GenericValue> {
     }
 
     public GenericValue remove(GenericPK pk) {
-    	RedisUtilCache<GenericPK, GenericValue> entityCache = getCache(pk.getEntityName());
+    	UtilRedisCache<GenericPK, GenericValue> entityCache = getCache(pk.getEntityName());
         if (Debug.verboseOn()) Debug.logVerbose("Removing from EntityCache with PK [" + pk + "], will remove from this cache: " + (entityCache == null ? "[No cache found to remove from]" : entityCache.getName()), module);
         if (entityCache == null) return null;
         GenericValue retVal = entityCache.remove(pk);
@@ -88,7 +88,7 @@ public class EntityCache extends AbstractCache<GenericPK, GenericValue> {
             Iterator<String> it = model.getViewConvertorsIterator();
             while (it.hasNext()) {
                 String targetEntityName = it.next();
-                RedisUtilCache.clearCache(getCacheName(targetEntityName));
+                UtilRedisCache.clearCache(getCacheName(targetEntityName));
             }
         }
         if (Debug.verboseOn()) Debug.logVerbose("Removing from EntityCache with PK [" + pk + "], found this in the cache: " + retVal, module);

@@ -1,77 +1,81 @@
 package org.ofbiz.base.cache.redis;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.ofbiz.base.util.Debug;
+import org.ofbiz.base.util.UtilObject;
 
 import redis.clients.jedis.Jedis;
 
-public class RedisUtilCacheFactory {
+public class UtilRedisCacheFactory {
 
 	/** A static Map to keep track of all of the UtilCache instances. */
-	private static final ConcurrentHashMap<String, RedisUtilCache<?, ?>> utilCacheTable = new ConcurrentHashMap<String, RedisUtilCache<?, ?>>();
+	private static final ConcurrentHashMap<String, UtilRedisCache<?, ?>> utilCacheTable = new ConcurrentHashMap<String, UtilRedisCache<?, ?>>();
 
-	private RedisCacheManager redisCacheManager = null;
+	/**
+	 * An index number appended to utilCacheTable names when there are
+	 * conflicts.
+	 */
+	private final static ConcurrentHashMap<String, AtomicInteger> defaultIndices = new ConcurrentHashMap<String, AtomicInteger>();
 
-	RedisUtilCacheFactory() {
+	private static RedisManager redisManager = null;
+
+	UtilRedisCacheFactory() {
 	}
 
-	private void init() {
-		if (redisCacheManager == null) {
+	private static void init() {
+		if (redisManager == null) {
 			initRedis();
 		}
 	}
 
-	private synchronized void initRedis() {
-		if (redisCacheManager == null) {
-			redisCacheManager = new RedisCacheManager();
+	private synchronized static void initRedis() {
+		if (redisManager == null) {
+			redisManager = new RedisManager();
 			String[] propNames = new String[] { "entitycache" };
 			ResourceBundle res = getCacheResource();
 			if (res != null) {
 				String redishost = getPropertyParam(res, propNames, "redis-host", null);
 				if (redishost != null) {
-					redisCacheManager.setHost(redishost);
+					redisManager.setHost(redishost);
 				}
 				int redisPort = getPropertyParam(res, propNames, "redis-port", 0);
 				if (redisPort > 0) {
-					redisCacheManager.setPort(redisPort);
+					redisManager.setPort(redisPort);
 				}
 				int redisDatabase = getPropertyParam(res, propNames, "redis-database", 0);
 				if (redisDatabase > 0) {
-					redisCacheManager.setDatabase(redisDatabase);
+					redisManager.setDatabase(redisDatabase);
 				}
 				String redisPassword = getPropertyParam(res, propNames, "redis-password", null);
-				if (redisPassword != null && !"".equals(redisPassword)) {
-					redisCacheManager.setPassword(redisPassword);
+				if (redisPassword != null && !"".equals(redisPassword.trim())) {
+					redisManager.setPassword(redisPassword);
 				}
 				int redisTimeout = getPropertyParam(res, propNames, "redis-timeout", -1);
 				if (redisTimeout >= 0) {
-					redisCacheManager.setTimeout(redisTimeout);
+					redisManager.setTimeout(redisTimeout);
 				}
 				String sentinelMaster = getPropertyParam(res, propNames, "redis-sentinelMaster", null);
-				if (sentinelMaster != null && !"".equals(sentinelMaster)) {
-					redisCacheManager.setSentinelMaster(sentinelMaster);
+				if (sentinelMaster != null && !"".equals(sentinelMaster.trim())) {
+					redisManager.setSentinelMaster(sentinelMaster);
 				}
 			}
-			redisCacheManager.initializeDatabaseConnection();
+			redisManager.initializeDatabaseConnection();
 		}
 	}
 
 	protected Jedis acquireRedisConnection() {
 		init();
-		return redisCacheManager.acquireConnection();
+		return redisManager.acquireConnection();
 	}
 
 	protected void returnRedisConnection(Jedis jedis, Boolean error) {
 		init();
-		redisCacheManager.returnConnection(jedis, error);
+		redisManager.returnConnection(jedis, error);
 	}
 
 	protected void returnRedisConnection(Jedis jedis) {
@@ -79,22 +83,24 @@ public class RedisUtilCacheFactory {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <K, V> RedisUtilCache<K, V> getOrCreateUtilCache(String cacheName, String... propNames) {
-		RedisUtilCache<K, V> existingCache = (RedisUtilCache<K, V>) utilCacheTable.get(cacheName);
+	public static <K, V> UtilRedisCache<K, V> getOrCreateUtilCache(String name, String... propNames) {
+		UtilRedisCache<K, V> existingCache = (UtilRedisCache<K, V>) utilCacheTable.get(name);
 		if (existingCache != null)
 			return existingCache;
-		RedisUtilCache<K, V> newCache = new RedisUtilCache<K, V>(cacheName, propNames);
-		utilCacheTable.putIfAbsent(cacheName, newCache);
-		return (RedisUtilCache<K, V>) utilCacheTable.get(cacheName);
+		UtilRedisCache<K, V> newCache = new UtilRedisCache<K, V>(name + getNextDefaultIndex(name), propNames);
+		
+		utilCacheTable.putIfAbsent(name, newCache);
+		return (UtilRedisCache<K, V>) utilCacheTable.get(name);
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <K, V> RedisUtilCache<K, V> findCache(String cacheName) {
-		return (RedisUtilCache<K, V>) utilCacheTable.get(cacheName);
+	public static <K, V> UtilRedisCache<K, V> findCache(String name) {
+		//UtilCache
+		return (UtilRedisCache<K, V>) utilCacheTable.get(name);
 	}
 
-	public static void clearCache(String cacheName) {
-		RedisUtilCache<?, ?> cache = findCache(cacheName);
+	public static void clearCache(String name) {
+		UtilRedisCache<?, ?> cache = findCache(name);
 		if (cache == null)
 			return;
 		cache.clear();
@@ -102,10 +108,10 @@ public class RedisUtilCacheFactory {
 	}
 
 	public static void clearCachesThatStartWith(String startsWith) {
-		for (Map.Entry<String, RedisUtilCache<?, ?>> entry : utilCacheTable.entrySet()) {
+		for (Map.Entry<String, UtilRedisCache<?, ?>> entry : utilCacheTable.entrySet()) {
 			String name = entry.getKey();
 			if (name.startsWith(startsWith)) {
-				RedisUtilCache<?, ?> cache = entry.getValue();
+				UtilRedisCache<?, ?> cache = entry.getValue();
 				cache.clear();
 			}
 		}
@@ -113,15 +119,26 @@ public class RedisUtilCacheFactory {
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////
-	protected ResourceBundle getCacheResource() {
+
+	private static String getNextDefaultIndex(String cacheName) {
+		AtomicInteger curInd = defaultIndices.get(cacheName);
+		if (curInd == null) {
+			defaultIndices.putIfAbsent(cacheName, new AtomicInteger(0));
+			curInd = defaultIndices.get(cacheName);
+		}
+		int i = curInd.getAndIncrement();
+		return i == 0 ? "" : Integer.toString(i);
+	}
+
+	protected static ResourceBundle getCacheResource() {
 		ResourceBundle res = ResourceBundle.getBundle("entitycache");
-		if(res==null){
+		if (res == null) {
 			res = ResourceBundle.getBundle("cache");
 		}
 		return res;
 	}
 
-	protected String getPropertyParam(ResourceBundle res, String[] propNames, String parameter, String defaultString) {
+	protected static String getPropertyParam(ResourceBundle res, String[] propNames, String parameter, String defaultString) {
 		String value = getPropertyParam(res, propNames, parameter);
 		if (value == null) {
 			value = defaultString;
@@ -129,7 +146,7 @@ public class RedisUtilCacheFactory {
 		return value;
 	}
 
-	protected int getPropertyParam(ResourceBundle res, String[] propNames, String parameter, int defaultInt) {
+	protected static int getPropertyParam(ResourceBundle res, String[] propNames, String parameter, int defaultInt) {
 		int intValue = defaultInt;
 		String strvalue = getPropertyParam(res, propNames, parameter);
 		try {
@@ -139,7 +156,7 @@ public class RedisUtilCacheFactory {
 		return intValue;
 	}
 
-	protected String getPropertyParam(ResourceBundle res, String[] propNames, String parameter) {
+	protected static String getPropertyParam(ResourceBundle res, String[] propNames, String parameter) {
 		try {
 			for (String propName : propNames) {
 				if (res.containsKey(propName + '.' + parameter)) {
@@ -162,35 +179,17 @@ public class RedisUtilCacheFactory {
 		}
 		return null;
 	}
+	
 
 	///////////////////////////////////////////////////////////////////////////////////////////
 	protected static byte[] serialize(Object object) {
-		ObjectOutputStream oos = null;
-		ByteArrayOutputStream baos = null;
-		try {
-			// ���л�
-			baos = new ByteArrayOutputStream();
-			oos = new ObjectOutputStream(baos);
-			oos.writeObject(object);
-			byte[] bytes = baos.toByteArray();
-			return bytes;
-		} catch (Exception e) {
-
-		}
-		return null;
+		if(object==null) return null;
+		return UtilObject.getBytes(object);
 	}
 
-	protected static Object unserialize(byte[] bytes) {
-		ByteArrayInputStream bais = null;
-		try {
-			// �����л�
-			bais = new ByteArrayInputStream(bytes);
-			ObjectInputStream ois = new ObjectInputStream(bais);
-			return ois.readObject();
-		} catch (Exception e) {
-
-		}
-		return null;
+	protected static Object deserialize(byte[] bytes) {
+		if(bytes==null) return null;
+		return UtilObject.getObject(bytes);
 	}
 
 }

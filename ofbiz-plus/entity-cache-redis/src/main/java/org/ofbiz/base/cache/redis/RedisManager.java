@@ -6,8 +6,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-
-
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -15,12 +13,8 @@ import redis.clients.jedis.JedisSentinelPool;
 import redis.clients.jedis.Protocol;
 import redis.clients.util.Pool;
 
+public class RedisManager {
 
-public class RedisCacheManager {
-
-//	private final Log log = LogFactory.getLog(RedisCacheManager.class);
-
-	////////////////////////////////////////////////////////////////////////////////////
 	protected String host = "localhost";
 	protected int port = 6379;
 	protected int database = 0;
@@ -32,7 +26,7 @@ public class RedisCacheManager {
 	protected Pool<Jedis> connectionPool;
 	protected JedisPoolConfig connectionPoolConfig = new JedisPoolConfig();
 
-	public RedisCacheManager() {
+	public RedisManager() {
 	}
 
 	public String getHost() {
