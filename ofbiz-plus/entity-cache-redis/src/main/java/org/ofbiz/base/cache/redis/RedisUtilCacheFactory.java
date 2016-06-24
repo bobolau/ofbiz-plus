@@ -48,7 +48,7 @@ public class RedisUtilCacheFactory {
 					redisCacheManager.setDatabase(redisDatabase);
 				}
 				String redisPassword = getPropertyParam(res, propNames, "redis-password", null);
-				if (redisPassword != null) {
+				if (redisPassword != null && !"".equals(redisPassword)) {
 					redisCacheManager.setPassword(redisPassword);
 				}
 				int redisTimeout = getPropertyParam(res, propNames, "redis-timeout", -1);
@@ -56,7 +56,7 @@ public class RedisUtilCacheFactory {
 					redisCacheManager.setTimeout(redisTimeout);
 				}
 				String sentinelMaster = getPropertyParam(res, propNames, "redis-sentinelMaster", null);
-				if (sentinelMaster != null) {
+				if (sentinelMaster != null && !"".equals(sentinelMaster)) {
 					redisCacheManager.setSentinelMaster(sentinelMaster);
 				}
 			}
@@ -168,7 +168,7 @@ public class RedisUtilCacheFactory {
 		ObjectOutputStream oos = null;
 		ByteArrayOutputStream baos = null;
 		try {
-			// ÐòÁÐ»¯
+			// ï¿½ï¿½ï¿½Ð»ï¿½
 			baos = new ByteArrayOutputStream();
 			oos = new ObjectOutputStream(baos);
 			oos.writeObject(object);
@@ -183,7 +183,7 @@ public class RedisUtilCacheFactory {
 	protected static Object unserialize(byte[] bytes) {
 		ByteArrayInputStream bais = null;
 		try {
-			// ·´ÐòÁÐ»¯
+			// ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½
 			bais = new ByteArrayInputStream(bytes);
 			ObjectInputStream ois = new ObjectInputStream(bais);
 			return ois.readObject();

@@ -11,10 +11,12 @@ repositories {
 }
 
 dependencies {
+    compile("javax.servlet:servlet-api:2.5")
     compile fileTree(dir: '../lib', include: '*.jar')
+    
     compile fileTree(dir: ofbiz_base+'/framework/base/lib', include: '*.jar')
     compile fileTree(dir: ofbiz_base+'/framework/base/build/lib', include: '*.jar')
     compile fileTree(dir: ofbiz_base+'/framework/entity/build/lib', include: '*.jar')     
-    compile("javax.servlet:servlet-api:2.5")
+    
 
 }

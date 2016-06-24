@@ -98,11 +98,11 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 		try {
 			jedis = acquireRedisConnection();
 			error = false;
-			Object obj = jedis.set(key.getBytes(), serialize(value));
+			String obj = jedis.set(key.getBytes(), serialize(value));
 			if (milliseconds > 0) {
 				jedis.pexpire(key, milliseconds);
 			}
-			return obj;
+			return value;
 		} finally {
 			if (jedis != null) {
 				returnRedisConnection(jedis, error);
