@@ -114,7 +114,10 @@ public class RedisUtilCacheFactory {
 
 	/////////////////////////////////////////////////////////////////////////////////
 	protected ResourceBundle getCacheResource() {
-		ResourceBundle res = ResourceBundle.getBundle("cache");
+		ResourceBundle res = ResourceBundle.getBundle("entitycache");
+		if(res==null){
+			res = ResourceBundle.getBundle("cache");
+		}
 		return res;
 	}
 

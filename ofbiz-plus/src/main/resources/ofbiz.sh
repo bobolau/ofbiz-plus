@@ -1,2 +1,2 @@
 #!/bin/bash
-# status|sart|stop|load-demo
+# status|start|stop|load-demo

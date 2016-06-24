@@ -75,7 +75,7 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 	public V put(K key, V value) {
 		// value: GenericValue
 		// value: Map<Object, List<GenericValue>>, Map<Object, Object>
-		return (V) redisSet(getRedisKey(key), value);
+		return (V) redisSet(getRedisKey(key), value, expireTimeNanos);
 	}
 
 	protected Object redisGet(String key) {
@@ -92,13 +92,17 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 		}
 	}
 
-	protected Object redisSet(String key, Object value) {
+	protected Object redisSet(String key, Object value, long milliseconds) {
 		Jedis jedis = null;
 		Boolean error = true;
 		try {
 			jedis = acquireRedisConnection();
 			error = false;
-			return jedis.set(key.getBytes(), serialize(value));
+			Object obj = jedis.set(key.getBytes(), serialize(value));
+			if (milliseconds > 0) {
+				jedis.pexpire(key, milliseconds);
+			}
+			return obj;
 		} finally {
 			if (jedis != null) {
 				returnRedisConnection(jedis, error);
