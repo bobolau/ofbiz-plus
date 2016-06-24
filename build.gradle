@@ -7,7 +7,8 @@ ext{
    ofbiz_version = '12.04.06' 
    //ofbiz_version = '13.07.03'
    ofbiz_download_url = 'http://mirror.bit.edu.cn/apache/ofbiz/apache-ofbiz-'+ofbiz_version+'.zip'
-   root_project_dir = 'D:/work2/agile/agile-biz'
+   root_project_dir = '/Users/bobo/workspace/agile/agile-biz'
+   //root_project_dir = rootProject.projectDir.path
    ofbiz_base = root_project_dir+'/ofbiz/apache-ofbiz-'+ofbiz_version
 }
 
