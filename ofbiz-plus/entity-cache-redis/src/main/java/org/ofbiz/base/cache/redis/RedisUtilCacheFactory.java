@@ -18,29 +18,22 @@ public class RedisUtilCacheFactory {
 	/** A static Map to keep track of all of the UtilCache instances. */
 	private static final ConcurrentHashMap<String, RedisUtilCache<?, ?>> utilCacheTable = new ConcurrentHashMap<String, RedisUtilCache<?, ?>>();
 
-	private static RedisUtilCacheFactory __factory = null;
-
-	public static RedisUtilCacheFactory getInstance() {
-		if (__factory == null) {
-			initFactory();
-		}
-		return __factory;
-	}
-
-	protected synchronized static void initFactory() {
-		if (__factory != null) {
-			return;
-		}
-		__factory = new RedisUtilCacheFactory();
-		__factory.init();
-	}
-
 	private RedisCacheManager redisCacheManager = null;
 
 	RedisUtilCacheFactory() {
 	}
 
+	private Map utilCacheTable() {
+		return this.utilCacheTable;
+	}
+
 	private void init() {
+		if (redisCacheManager == null) {
+			initRedis();
+		}
+	}
+
+	private synchronized void initRedis() {
 		if (redisCacheManager == null) {
 			redisCacheManager = new RedisCacheManager();
 			String[] propNames = new String[] { "entitycache" };
