@@ -37,6 +37,10 @@ import org.ofbiz.entity.GenericValue;
 import org.ofbiz.entity.condition.EntityCondition;
 import org.ofbiz.entity.model.ModelEntity;
 
+/**
+ * copy from  org.ofbiz.entity.cache.AbstractEntityConditionCache
+ * remove method storeHook
+ */
 public abstract class AbstractEntityConditionCache<K, V> extends AbstractCache<EntityCondition, ConcurrentMap<K, V>> {
 
     public static final String module = AbstractEntityConditionCache.class.getName();

@@ -62,14 +62,16 @@ public class EntityCache extends AbstractCache<GenericPK, GenericValue> {
         return entityCache.put(pk, entity);
     }
 
+    
     public void remove(String entityName, EntityCondition condition) {
-    	RedisUtilCache<GenericPK, GenericValue> entityCache = getCache(entityName);
-        if (entityCache == null) return;
-        for (GenericPK pk: entityCache.getCacheLineKeys()) {
-            GenericValue entity = entityCache.get(pk);
-            if (entity == null) continue;
-            if (condition.entityMatches(entity)) entityCache.remove(pk);
-        }
+    	//nothing to do for redis cache
+//    	RedisUtilCache<GenericPK, GenericValue> entityCache = getCache(entityName);
+//        if (entityCache == null) return;
+//        for (GenericPK pk: entityCache.getCacheLineKeys()) {
+//            GenericValue entity = entityCache.get(pk);
+//            if (entity == null) continue;
+//            if (condition.entityMatches(entity)) entityCache.remove(pk);
+//        }
     }
 
     public GenericValue remove(GenericValue entity) {

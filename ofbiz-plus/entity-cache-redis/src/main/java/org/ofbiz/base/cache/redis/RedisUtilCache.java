@@ -52,47 +52,30 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 	}
 
 	public void clear() {
-		Set<String> redisKeys = getRedisKeys();
-		// TODO clear all keys
+		this.redisClearKeyStartwith(getKeyPrefix());
 	}
 
 	public V remove(Object key) {
-		String redisKey = getRedisKey(key);
-		// TODO
-		if (isConditionCache(key)) {
-			// ConcurrentMap<Object, List<GenericValue>>
-		} else {
-
-		}
-		return null;
+		return (V) redisDel(getRedisKey(key));
 	}
 
+	/**
+	 * @deprecated this method for ofbiz origin cache
+	 */
 	public Set<? extends K> getCacheLineKeys() {
-		// TODO only for condition key
-		return null;
+		throw new UnsupportedOperationException("getCacheLineKeys in cache by redis");
 	}
 
 	public V get(Object key) {
-		String redisKey = getRedisKey(key);
-		// TODO
-		if (isConditionCache(key)) {
-			// value: Map<Object, List<GenericValue>>, Map<Object, Object>
-		} else {
-			// value: GenericValue
-		}
-		return null;
+		// EntityCache: GenericValue
+		// ConditionCache: Map<Object, List<GenericValue>>, Map<Object, Object>
+		return (V) redisGet(getRedisKey(key));
 	}
 
 	public V put(K key, V value) {
-		String redisKey = getRedisKey(key);
-		// TODO
-		if (isConditionCache(key)) {
-			// value: Map<Object, List<GenericValue>>, Map<Object, Object>
-		} else {
-			// value: GenericValue
-
-		}
-		return null;
+		// value: GenericValue
+		// value: Map<Object, List<GenericValue>>, Map<Object, Object>
+		return (V) redisSet(getRedisKey(key), value);
 	}
 
 	protected Object redisGet(String key) {
@@ -101,8 +84,7 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 		try {
 			jedis = acquireRedisConnection();
 			error = false;
-			return null;
-
+			return unserialize(jedis.get(key.getBytes()));
 		} finally {
 			if (jedis != null) {
 				returnRedisConnection(jedis, error);
@@ -110,8 +92,18 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 		}
 	}
 
-	protected Object redisPut(String key, Object value) {
-		return null;
+	protected Object redisSet(String key, Object value) {
+		Jedis jedis = null;
+		Boolean error = true;
+		try {
+			jedis = acquireRedisConnection();
+			error = false;
+			return jedis.set(key.getBytes(), serialize(value));
+		} finally {
+			if (jedis != null) {
+				returnRedisConnection(jedis, error);
+			}
+		}
 	}
 
 	protected void redisClearKeyStartwith(String key) {
@@ -132,8 +124,20 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 
 	}
 
-	protected Object redisRemove(String key) {
-		return null;
+	protected Object redisDel(String key) {
+		Jedis jedis = null;
+		Boolean error = true;
+		try {
+			jedis = acquireRedisConnection();
+			error = false;
+			Object oldValue = unserialize(jedis.get(key.getBytes()));
+			jedis.del(key.getBytes());
+			return oldValue;
+		} finally {
+			if (jedis != null) {
+				returnRedisConnection(jedis, error);
+			}
+		}
 	}
 
 	protected void redisClear() {
@@ -150,48 +154,19 @@ public class RedisUtilCache<K, V> extends RedisUtilCacheFactory implements Seria
 		}
 	}
 
-	public String[] keysRedis() throws IOException {
-		Jedis jedis = null;
-		Boolean error = true;
-		try {
-			jedis = acquireRedisConnection();
-			Set<String> keySet = jedis.keys("*");
-			error = false;
-			return keySet.toArray(new String[keySet.size()]);
-		} finally {
-			if (jedis != null) {
-				returnRedisConnection(jedis, error);
-			}
-		}
-	}
-
 	////////////////////////////////////////////////////////////////////
-
-	protected boolean isConditionCache(Object key) {
-		if (key != null && key instanceof EntityCondition) {
-			return true;
-		}
-		return false;
-	}
 
 	protected String getRedisKey(Object key) {
 		StringBuffer sb = new StringBuffer();
 		sb.append(getKeyPrefix());
 		if (key instanceof GenericPK) { // PK
-			for (ModelField curPk : ((GenericPK) key).getModelEntity().getPkFieldsUnmodifiable()) {
-				sb.append("_").append(((GenericPK) key).getString(curPk.getName()));
-			}
+			sb.append(((GenericPK) key).getPkShortValueString());
 		} else if (key instanceof EntityCondition) { // conditionKey
 			sb.append(((EntityCondition) key).toString()); // where
 		} else {
-			sb.append(key);
+			sb.append(key.toString());
 		}
 		return sb.toString();
-	}
-
-	protected Set<String> getRedisKeys() {
-		// TODO
-		return null;
 	}
 
 	protected void setPropertiesParams(String cacheName) {

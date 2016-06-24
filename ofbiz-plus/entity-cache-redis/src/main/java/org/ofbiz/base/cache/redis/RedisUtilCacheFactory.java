@@ -1,16 +1,15 @@
 package org.ofbiz.base.cache.redis;
 
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
-import org.ofbiz.base.container.ContainerConfig;
 import org.ofbiz.base.util.Debug;
-import org.ofbiz.base.util.UtilValidate;
 
 import redis.clients.jedis.Jedis;
 
@@ -89,8 +88,7 @@ public class RedisUtilCacheFactory {
 	protected void returnRedisConnection(Jedis jedis) {
 		returnRedisConnection(jedis, false);
 	}
-	
-	
+
 	@SuppressWarnings("unchecked")
 	public static <K, V> RedisUtilCache<K, V> getOrCreateUtilCache(String cacheName, String... propNames) {
 		RedisUtilCache<K, V> existingCache = (RedisUtilCache<K, V>) utilCacheTable.get(cacheName);
@@ -169,6 +167,36 @@ public class RedisUtilCacheFactory {
 			Debug.logWarning(e,
 					"Error getting " + parameter + " value from cache.properties file for propNames: " + propNames,
 					"catalina");
+		}
+		return null;
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////
+	protected static byte[] serialize(Object object) {
+		ObjectOutputStream oos = null;
+		ByteArrayOutputStream baos = null;
+		try {
+			// 序列化
+			baos = new ByteArrayOutputStream();
+			oos = new ObjectOutputStream(baos);
+			oos.writeObject(object);
+			byte[] bytes = baos.toByteArray();
+			return bytes;
+		} catch (Exception e) {
+
+		}
+		return null;
+	}
+
+	protected static Object unserialize(byte[] bytes) {
+		ByteArrayInputStream bais = null;
+		try {
+			// 反序列化
+			bais = new ByteArrayInputStream(bytes);
+			ObjectInputStream ois = new ObjectInputStream(bais);
+			return ois.readObject();
+		} catch (Exception e) {
+
 		}
 		return null;
 	}

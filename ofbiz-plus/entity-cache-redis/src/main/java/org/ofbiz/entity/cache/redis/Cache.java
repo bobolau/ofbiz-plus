@@ -28,6 +28,11 @@ import org.ofbiz.entity.GenericPK;
 import org.ofbiz.entity.GenericValue;
 import org.ofbiz.entity.condition.EntityCondition;
 
+/**
+ * Cache by redis
+ * copy from org.ofbiz.entity.cache.Cache (ofbiz)
+ * disabled storeHook in method put
+ */
 public class Cache implements Serializable {
 
 	public static final String module = Cache.class.getName();
@@ -79,19 +84,21 @@ public class Cache implements Serializable {
 
 	public GenericValue put(GenericValue entity) {
 		GenericValue oldEntity = entityCache.put(entity.getPrimaryKey(), entity);
-		if (entity.getModelEntity().getAutoClearCache()) {
-			entityListCache.storeHook(entity);
-			entityObjectCache.storeHook(entity);
-		}
+		// do not need storeHook for redis cache
+//		if (entity.getModelEntity().getAutoClearCache()) {
+//			entityListCache.storeHook(entity);
+//			entityObjectCache.storeHook(entity);
+//		}
 		return oldEntity;
 	}
 
 	public GenericValue put(GenericPK pk, GenericValue entity) {
 		GenericValue oldEntity = entityCache.put(pk, entity);
-		if (pk.getModelEntity().getAutoClearCache()) {
-			entityListCache.storeHook(pk, entity);
-			entityObjectCache.storeHook(pk, entity);
-		}
+		// do not need storeHook for redis cache
+//		if (pk.getModelEntity().getAutoClearCache()) {
+//			entityListCache.storeHook(pk, entity);
+//			entityObjectCache.storeHook(pk, entity);
+//		}
 		return oldEntity;
 	}
 
