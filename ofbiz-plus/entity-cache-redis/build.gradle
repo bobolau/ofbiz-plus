@@ -2,7 +2,7 @@ apply plugin: 'java'
 
 jar {
     baseName = 'ofbiz-entity-cache-redis'
-    version =  '0.1-SNAPSHOT'
+    version =  '1.0'
 }
 
 repositories {
