@@ -4,8 +4,10 @@ ofbiz集成redis实现tomcat会话同步
 特性描述：
 ----------------------------------- 
 用redis实现tomcat会话同步，以提供tomcat集群多主机时会话同步的效率。
+主要实现ofbiz集成此功能，原功能实现参考
 
- (cluster) tomcat session management by redis
+ redis实现tomcat会话同步
+ https://github.com/jcoleman/tomcat-redis-session-manager
 
 处理步骤：
 ----------------------------------- 
