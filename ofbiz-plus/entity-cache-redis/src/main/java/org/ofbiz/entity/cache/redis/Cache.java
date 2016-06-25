@@ -83,35 +83,21 @@ public class Cache implements Serializable {
 	}
 
 	public GenericValue put(GenericValue entity) {
-		GenericValue oldEntity = entityCache.put(entity.getPrimaryKey(), entity);
-		// do not need storeHook for redis cache
-//		if (entity.getModelEntity().getAutoClearCache()) {
-//			entityListCache.storeHook(entity);
-//			entityObjectCache.storeHook(entity);
-//		}
-		return oldEntity;
+		return put(entity.getPrimaryKey(), entity);
 	}
 
 	public GenericValue put(GenericPK pk, GenericValue entity) {
 		GenericValue oldEntity = entityCache.put(pk, entity);
-		// do not need storeHook for redis cache
-//		if (pk.getModelEntity().getAutoClearCache()) {
-//			entityListCache.storeHook(pk, entity);
-//			entityObjectCache.storeHook(pk, entity);
-//		}
 		return oldEntity;
 	}
-
-	public List<GenericValue> remove(String entityName, EntityCondition condition, List<String> orderBy) {
-		entityCache.remove(entityName, condition);
-		entityObjectCache.remove(entityName, condition);
-		return entityListCache.remove(entityName, condition, orderBy);
-	}
-
+	
 	public void remove(String entityName, EntityCondition condition) {
-		entityCache.remove(entityName, condition);
 		entityListCache.remove(entityName, condition);
 		entityObjectCache.remove(entityName, condition);
+	}
+
+	public List<GenericValue> remove(String entityName, EntityCondition condition, List<String> orderBy) {		
+		return entityListCache.remove(entityName, condition, orderBy);
 	}
 
 	public <T> T remove(String entityName, EntityCondition condition, String name) {
@@ -126,8 +112,6 @@ public class Cache implements Serializable {
 		// work.
 		entityListCache.remove(entity);
 		entityObjectCache.remove(entity);
-		// entityListCache.storeHook(entity, null);
-		// entityObjectCache.storeHook(entity, null);
 		return oldEntity;
 	}
 
@@ -139,8 +123,6 @@ public class Cache implements Serializable {
 		// work.
 		entityListCache.remove(pk);
 		entityObjectCache.remove(pk);
-		// entityListCache.storeHook(pk, null);
-		// entityObjectCache.storeHook(pk, null);
 		return oldEntity;
 	}
 }

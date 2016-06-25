@@ -1,34 +1,34 @@
 package org.ofbiz.base.cache.redis;
 
-import java.io.IOException;
 import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 import org.ofbiz.base.util.Debug;
+import org.ofbiz.base.util.UtilObject;
 import org.ofbiz.base.util.UtilValidate;
-import org.ofbiz.entity.GenericEntity;
 import org.ofbiz.entity.GenericPK;
-import org.ofbiz.entity.GenericValue;
 import org.ofbiz.entity.condition.EntityCondition;
-import org.ofbiz.entity.model.ModelField;
-import org.ofbiz.base.util.cache.UtilCache;
 
 import redis.clients.jedis.Jedis;
 
+/**
+ * 1-entity:(entityname+pk)->entity/view
+ * 2-entityList:(entityname+conditionKey)->map(orderBy->List)
+ * 3-entityObject:(entityname+conditionKey)->map(filedname->object)
+ */
+
 @SuppressWarnings("serial")
 public class UtilRedisCache<K, V>
-		// extends UtilCache<K, V>
-		extends UtilRedisCacheFactory implements Serializable {
+		// extends UtilRedisCacheFactory
+		implements Serializable {
 
 	private static final long serialVersionUID = -6583046019268551550L;
 
 	public static final String module = UtilRedisCache.class.getName();
+
+	private RedisManager redisManager = null;
 
 	/**
 	 * The name of the UtilCache instance, is also the key for the instance in
@@ -52,6 +52,22 @@ public class UtilRedisCache<K, V>
 		return this.name;
 	}
 
+	void setRedisManager(RedisManager redisManager) {
+		this.redisManager = redisManager;
+	}
+
+	protected Jedis acquireRedisConnection() {
+		return redisManager.acquireConnection();
+	}
+
+	protected void returnRedisConnection(Jedis jedis, Boolean error) {
+		redisManager.returnConnection(jedis, error);
+	}
+
+	protected void returnRedisConnection(Jedis jedis) {
+		returnRedisConnection(jedis, false);
+	}
+
 	protected String getKeyPrefix() {
 		return getName() + "_";
 	}
@@ -60,11 +76,15 @@ public class UtilRedisCache<K, V>
 		this.redisClearKeyStartwith(getKeyPrefix());
 	}
 
+	public void clear(Object conditionKey) {
+		redisClearKeyStartwith(getRedisKey(conditionKey));
+	}
+
 	public V remove(Object key) {
 		return (V) redisDel(getRedisKey(key));
 	}
 
-	public V remove(EntityCondition conditionKey, Object key) {
+	public V remove(Object conditionKey, Object key) {
 		return (V) redisDel(getRedisKey(conditionKey, key));
 	}
 
@@ -73,7 +93,7 @@ public class UtilRedisCache<K, V>
 		return value;
 	}
 
-	public V get(EntityCondition conditionKey, Object key) {
+	public V get(Object conditionKey, Object key) {
 		V value = (V) redisGet(getRedisKey(conditionKey, key));
 		return value;
 	}
@@ -81,16 +101,32 @@ public class UtilRedisCache<K, V>
 	public V put(K key, V value) {
 		return (V) redisSet(getRedisKey(key), value, expireTimeNanos);
 	}
-	
-	public V put(EntityCondition conditionKey, K key, V value) {
+
+	public V put(Object conditionKey, K key, V value) {
 		return (V) redisSet(getRedisKey(conditionKey, key), value, expireTimeNanos);
 	}
-	
+
 	/**
 	 * @deprecated this method for ofbiz origin cache
 	 */
 	public Set<? extends K> getCacheLineKeys() {
 		throw new UnsupportedOperationException("getCacheLineKeys in cache by redis");
+	}
+
+	public Set<String> redisKeyset(String startwith) {
+
+		Jedis jedis = null;
+		Boolean error = true;
+		try {
+			jedis = acquireRedisConnection();
+			Set<String> keySet = jedis.keys(startwith + "*");
+			error = false;
+			return keySet;
+		} finally {
+			if (jedis != null) {
+				returnRedisConnection(jedis, error);
+			}
+		}
 	}
 
 	protected Object redisGet(String key) {
@@ -200,7 +236,7 @@ public class UtilRedisCache<K, V>
 		return sb.toString();
 	}
 
-	protected String getRedisKey(EntityCondition conditionKey, Object key) {
+	protected String getRedisKey(Object conditionKey, Object key) {
 		StringBuffer sb = new StringBuffer();
 		sb.append(getKeyPrefix());
 		sb.append(conditionKey);
@@ -213,13 +249,26 @@ public class UtilRedisCache<K, V>
 	}
 
 	protected void setPropertiesParams(String[] propNames) {
-		ResourceBundle res = getCacheResource();
+		ResourceBundle res = UtilRedisCacheFactory.getCacheResource();
 		if (res != null) {
-			String value = getPropertyParam(res, propNames, "expireTime");
+			String value = UtilRedisCacheFactory.getPropertyParam(res, propNames, "expireTime");
 			if (UtilValidate.isNotEmpty(value)) {
 				this.expireTimeNanos = TimeUnit.NANOSECONDS.convert(Long.parseLong(value), TimeUnit.MILLISECONDS);
 			}
 		}
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////
+	protected static byte[] serialize(Object object) {
+		if (object == null)
+			return null;
+		return UtilObject.getBytes(object);
+	}
+
+	protected static Object deserialize(byte[] bytes) {
+		if (bytes == null)
+			return null;
+		return UtilObject.getObject(bytes);
 	}
 
 }

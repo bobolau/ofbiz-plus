@@ -24,13 +24,14 @@ public class UtilRedisCacheFactory {
 
 	private static RedisManager redisManager = null;
 
-	UtilRedisCacheFactory() {
+	private UtilRedisCacheFactory() {
 	}
 
-	private static void init() {
+	private static RedisManager getRedisManager() {
 		if (redisManager == null) {
 			initRedis();
 		}
+		return redisManager;
 	}
 
 	private synchronized static void initRedis() {
@@ -68,34 +69,20 @@ public class UtilRedisCacheFactory {
 		}
 	}
 
-	protected Jedis acquireRedisConnection() {
-		init();
-		return redisManager.acquireConnection();
-	}
-
-	protected void returnRedisConnection(Jedis jedis, Boolean error) {
-		init();
-		redisManager.returnConnection(jedis, error);
-	}
-
-	protected void returnRedisConnection(Jedis jedis) {
-		returnRedisConnection(jedis, false);
-	}
-
 	@SuppressWarnings("unchecked")
 	public static <K, V> UtilRedisCache<K, V> getOrCreateUtilCache(String name, String... propNames) {
 		UtilRedisCache<K, V> existingCache = (UtilRedisCache<K, V>) utilCacheTable.get(name);
 		if (existingCache != null)
 			return existingCache;
 		UtilRedisCache<K, V> newCache = new UtilRedisCache<K, V>(name + getNextDefaultIndex(name), propNames);
-		
+		newCache.setRedisManager(getRedisManager());
 		utilCacheTable.putIfAbsent(name, newCache);
 		return (UtilRedisCache<K, V>) utilCacheTable.get(name);
 	}
 
 	@SuppressWarnings("unchecked")
 	public static <K, V> UtilRedisCache<K, V> findCache(String name) {
-		//UtilCache
+		// UtilCache
 		return (UtilRedisCache<K, V>) utilCacheTable.get(name);
 	}
 
@@ -138,7 +125,8 @@ public class UtilRedisCacheFactory {
 		return res;
 	}
 
-	protected static String getPropertyParam(ResourceBundle res, String[] propNames, String parameter, String defaultString) {
+	protected static String getPropertyParam(ResourceBundle res, String[] propNames, String parameter,
+			String defaultString) {
 		String value = getPropertyParam(res, propNames, parameter);
 		if (value == null) {
 			value = defaultString;
@@ -179,17 +167,7 @@ public class UtilRedisCacheFactory {
 		}
 		return null;
 	}
+
 	
-
-	///////////////////////////////////////////////////////////////////////////////////////////
-	protected static byte[] serialize(Object object) {
-		if(object==null) return null;
-		return UtilObject.getBytes(object);
-	}
-
-	protected static Object deserialize(byte[] bytes) {
-		if(bytes==null) return null;
-		return UtilObject.getObject(bytes);
-	}
 
 }

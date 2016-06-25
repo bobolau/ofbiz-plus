@@ -21,6 +21,7 @@ package org.ofbiz.entity.cache.redis;
 import java.util.Iterator;
 
 import org.ofbiz.base.cache.redis.UtilRedisCache;
+import org.ofbiz.base.cache.redis.UtilRedisCacheFactory;
 import org.ofbiz.base.util.Debug;
 //import org.ofbiz.base.util.cache.UtilCache;
 import org.ofbiz.entity.GenericPK;
@@ -38,7 +39,8 @@ public class EntityCache extends AbstractCache<GenericPK, GenericValue> {
     public GenericValue get(GenericPK pk) {
         UtilRedisCache<GenericPK, GenericValue> entityCache = getCache(pk.getEntityName());
         if (entityCache == null) return null;
-        return entityCache.get(pk);
+        GenericValue value= entityCache.get(pk);
+        return value;
     }
 
     public GenericValue put(GenericValue entity) {
@@ -62,18 +64,6 @@ public class EntityCache extends AbstractCache<GenericPK, GenericValue> {
         return entityCache.put(pk, entity);
     }
 
-    
-    public void remove(String entityName, EntityCondition condition) {
-    	//nothing to do for redis cache
-//    	RedisUtilCache<GenericPK, GenericValue> entityCache = getCache(entityName);
-//        if (entityCache == null) return;
-//        for (GenericPK pk: entityCache.getCacheLineKeys()) {
-//            GenericValue entity = entityCache.get(pk);
-//            if (entity == null) continue;
-//            if (condition.entityMatches(entity)) entityCache.remove(pk);
-//        }
-    }
-
     public GenericValue remove(GenericValue entity) {
         return remove(entity.getPrimaryKey());
     }
@@ -88,7 +78,7 @@ public class EntityCache extends AbstractCache<GenericPK, GenericValue> {
             Iterator<String> it = model.getViewConvertorsIterator();
             while (it.hasNext()) {
                 String targetEntityName = it.next();
-                UtilRedisCache.clearCache(getCacheName(targetEntityName));
+                UtilRedisCacheFactory.clearCache(getCacheName(targetEntityName));
             }
         }
         if (Debug.verboseOn()) Debug.logVerbose("Removing from EntityCache with PK [" + pk + "], found this in the cache: " + retVal, module);
