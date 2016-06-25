@@ -99,27 +99,11 @@ public abstract class AbstractEntityConditionCache<K, V> extends AbstractCache<K
 
 	public static final EntityCondition getFrozenConditionKey(EntityCondition condition) {
 		EntityCondition frozenCondition = condition != null ? condition.freeze() : null;
-		// This is no longer needed, fixed issue with unequal conditions after
-		// freezing
-		// if (condition != null) {
-		// if (!condition.equals(frozenCondition)) {
-		// Debug.logWarning("Frozen condition does not equal condition:\n
-		// -=-=-=-Original=" + condition + "\n -=-=-=-Frozen=" +
-		// frozenCondition, module);
-		// Debug.logWarning("Frozen condition not equal info: condition class="
-		// + condition.getClass().getName() + "; frozenCondition class=" +
-		// frozenCondition.getClass().getName(), module);
-		// }
-		// }
 		return frozenCondition;
 	}
-
-	
 
 	protected static final <K, V> boolean isNull(Map<K, V> value) {
 		return value == null || value == GenericEntity.NULL_ENTITY || value == GenericValue.NULL_VALUE;
 	}
-
-	
 
 }

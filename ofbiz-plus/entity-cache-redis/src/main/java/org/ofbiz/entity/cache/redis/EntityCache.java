@@ -23,10 +23,10 @@ import java.util.Iterator;
 import org.ofbiz.base.cache.redis.UtilRedisCache;
 import org.ofbiz.base.cache.redis.UtilRedisCacheFactory;
 import org.ofbiz.base.util.Debug;
+import org.ofbiz.entity.GenericEntity.NULL;
 //import org.ofbiz.base.util.cache.UtilCache;
 import org.ofbiz.entity.GenericPK;
 import org.ofbiz.entity.GenericValue;
-import org.ofbiz.entity.condition.EntityCondition;
 import org.ofbiz.entity.model.ModelEntity;
 
 public class EntityCache extends AbstractCache<GenericPK, GenericValue> {
@@ -40,6 +40,9 @@ public class EntityCache extends AbstractCache<GenericPK, GenericValue> {
         UtilRedisCache<GenericPK, GenericValue> entityCache = getCache(pk.getEntityName());
         if (entityCache == null) return null;
         GenericValue value= entityCache.get(pk);
+        if(value!=null && value instanceof NULL){
+        	value = GenericValue.NULL_VALUE;
+        }
         return value;
     }
 

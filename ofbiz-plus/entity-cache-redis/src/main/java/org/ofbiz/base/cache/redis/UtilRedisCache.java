@@ -73,11 +73,11 @@ public class UtilRedisCache<K, V>
 	}
 
 	public void clear() {
-		this.redisClearKeyStartwith(getKeyPrefix());
+		redisClear(getKeyPrefix());
 	}
 
 	public void clear(Object conditionKey) {
-		redisClearKeyStartwith(getRedisKey(conditionKey));
+		redisClear(getRedisKey(conditionKey));
 	}
 
 	public V remove(Object key) {
@@ -99,18 +99,11 @@ public class UtilRedisCache<K, V>
 	}
 
 	public V put(K key, V value) {
-		return (V) redisSet(getRedisKey(key), value, expireTimeNanos);
+		return (V) redisSet(getRedisKey(key), value, (int)expireTimeNanos);
 	}
 
 	public V put(Object conditionKey, K key, V value) {
-		return (V) redisSet(getRedisKey(conditionKey, key), value, expireTimeNanos);
-	}
-
-	/**
-	 * @deprecated this method for ofbiz origin cache
-	 */
-	public Set<? extends K> getCacheLineKeys() {
-		throw new UnsupportedOperationException("getCacheLineKeys in cache by redis");
+		return (V) redisSet(getRedisKey(conditionKey, key), value, (int)expireTimeNanos);
 	}
 
 	public Set<String> redisKeyset(String startwith) {
@@ -145,20 +138,16 @@ public class UtilRedisCache<K, V>
 			}
 		}
 	}
-
-	protected Object redisSet(String key, Object value, long milliseconds) {
+	
+	protected Object redisGet(String key, String field) {
 		Jedis jedis = null;
 		Boolean error = true;
 		try {
 			jedis = acquireRedisConnection();
 			error = false;
-			String obj = jedis.set(key.getBytes(), serialize(value));
-			if (milliseconds > 0) {
-				jedis.pexpire(key.getBytes(), milliseconds);
-			}
+			Object value = deserialize(jedis.hget(key.getBytes(),field.getBytes()));
 			if (Debug.verboseOn())
-				Debug.logVerbose("redis set with key [" + key + "], value is [" + value + "]"
-						+ (milliseconds > 0 ? ", expire [" + milliseconds + "] millisends" : ""), "redis");
+				Debug.logVerbose("redis get with  key [" + key + "], field ["+field+"],result is [" + value + "]", "redis");
 			return value;
 		} finally {
 			if (jedis != null) {
@@ -167,25 +156,50 @@ public class UtilRedisCache<K, V>
 		}
 	}
 
-	protected void redisClearKeyStartwith(String key) {
+	protected Object redisSet(String key, Object value, int seconds) {
 		Jedis jedis = null;
 		Boolean error = true;
 		try {
 			jedis = acquireRedisConnection();
-			Set<String> keySet = jedis.keys(key + "*");
 			error = false;
-			if (Debug.verboseOn())
-				Debug.logVerbose("redis clear start with key [" + key + "]", "redis");
-			for (String kk : keySet) {
-				jedis.del(kk);
+			if (seconds > 0) {
+				jedis.setex(key.getBytes(), seconds, serialize(value));
+			}else{
+				jedis.set(key.getBytes(), serialize(value));
 			}
+			if (Debug.verboseOn())
+				Debug.logVerbose("redis set with key [" + key + "], value is [" + value + "]"
+						+ (seconds > 0 ? ", expire [" + seconds + "] seconds" : ""), "redis");
+			return value;
 		} finally {
 			if (jedis != null) {
 				returnRedisConnection(jedis, error);
 			}
 		}
-
 	}
+	
+	protected Object redisSet(String key, String field, Object value, int seconds) {
+		Jedis jedis = null;
+		Boolean error = true;
+		try {
+			jedis = acquireRedisConnection();
+			error = false;
+			jedis.hset(key.getBytes(), field.getBytes(),serialize(value));
+			if (seconds > 0) {
+				//TOODO
+			}
+			if (Debug.verboseOn())
+				Debug.logVerbose("redis set with key [" + key + "], field ["+seconds+"], value is [" + value + "]"
+						+ (seconds > 0 ? ", expire [" + seconds + "] seconds" : ""), "redis");
+			return value;
+		} finally {
+			if (jedis != null) {
+				returnRedisConnection(jedis, error);
+			}
+		}
+	}
+
+	
 
 	protected Object redisDel(String key) {
 		Jedis jedis = null;
@@ -197,6 +211,24 @@ public class UtilRedisCache<K, V>
 			jedis.del(key.getBytes());
 			if (Debug.verboseOn())
 				Debug.logVerbose("redis del with key [" + key + "]", "redis");
+			return oldValue;
+		} finally {
+			if (jedis != null) {
+				returnRedisConnection(jedis, error);
+			}
+		}
+	}
+	
+	protected Object redisDel(String key, String field) {
+		Jedis jedis = null;
+		Boolean error = true;
+		try {
+			jedis = acquireRedisConnection();
+			error = false;
+			Object oldValue = deserialize(jedis.hget(key.getBytes(), field.getBytes()));
+			jedis.hdel(key.getBytes(), field.getBytes());
+			if (Debug.verboseOn())
+				Debug.logVerbose("redis del with key [" + key + "], field ["+field+"]", "redis");
 			return oldValue;
 		} finally {
 			if (jedis != null) {
@@ -219,6 +251,45 @@ public class UtilRedisCache<K, V>
 				returnRedisConnection(jedis, error);
 			}
 		}
+	}
+	
+	protected void redisClear(String startwith) {
+		Jedis jedis = null;
+		Boolean error = true;
+		try {
+			jedis = acquireRedisConnection();
+			Set<String> keySet = jedis.keys(startwith + "*");
+			error = false;
+			if (Debug.verboseOn())
+				Debug.logVerbose("redis clear start with key [" + startwith + "]", "redis");
+			for (String kk : keySet) {
+				jedis.del(kk);
+			}
+		} finally {
+			if (jedis != null) {
+				returnRedisConnection(jedis, error);
+			}
+		}
+
+	}
+	protected void redisClearTable(String key) {
+		Jedis jedis = null;
+		Boolean error = true;
+		try {
+			jedis = acquireRedisConnection();
+			Set<byte[]> keySet = jedis.hkeys(key.getBytes());
+			error = false;
+			if (Debug.verboseOn())
+				Debug.logVerbose("redis clear hashtable  with key [" + key + "]", "redis");
+			for (byte[] kk : keySet) {
+				jedis.del(kk);
+			}
+		} finally {
+			if (jedis != null) {
+				returnRedisConnection(jedis, error);
+			}
+		}
+
 	}
 
 	////////////////////////////////////////////////////////////////////
