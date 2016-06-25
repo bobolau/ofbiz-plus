@@ -23,6 +23,7 @@ preload ofbiz-plus-*.jar(for replace class org.ofbiz.entity.cache.Cache)
 到／ofbiz/apache-ofbiz-xxx/framework/base/config <br/>
 
 文件中entitycache.properties可配置redis的连接以及原有cache.properties中entitycache的设置 <br/>
+
 		entitycache.redis-host=localhost
 		entitycache.redis-port=6379
 		entitycache.redis-database=0
