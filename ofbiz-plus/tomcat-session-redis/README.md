@@ -1,12 +1,23 @@
 
+特性描述：
+用redis实现tomcat会话同步，以提供tomcat集群多主机时会话同步的效率。
 
  (cluster) tomcat session management by redis
 
-12.04
-/framework/base/config/ofbiz-containers.xml
-13.07
-/framework/catalina/ofbiz-component.xml
+处理步骤：
+1. 复制基础jar包
+复制/ofbiz-plus/lib/下jar到／ofbiz/apache-ofbiz-xxx/framework/base/lib/
+commons-pool2-2.3.jar
+jedis-2.8.0.jar
 
+2. 复制实现jar包
+复制/ofbiz-plus/tomcat-session-redis/build/libs/ofbiz-tomcat-session-redis-xx.jar
+到/ofbiz/apache-ofbiz-xxx/framework/catalina/build/lib/
+
+3. 修改配置文件
+/ofbiz/apache-ofbiz-xxx/framework/catalina/ofbiz-component.xml (13.07及以后版本)
+12.04之前版本 /framework/base/config/ofbiz-containers.xml
+修改配置内容，在cluster配置中修改redis参数
     <container name="catalina-container" loaders="main" class="org.ofbiz.catalina.container.CatalinaContainerRedis">
     
         <property name="default-server" value="engine">  
