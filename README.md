@@ -5,10 +5,12 @@ Agile Biz
 
 1.0 ofbiz集群扩展功能
 ----------------------------------- 
-ofbiz集群－通过redis实现tomcat的会话复制功能
-参见 /ofbiz-plus/tomcat-session-redis
-ofbiz集群－通过redis实现entitycache功能（替换通过MQ实现缓存同步功能）
-参见 /ofbiz-plus/entity-cache-redis
+### redis实现tomcat会话复制
+ofbiz集群－通过redis实现tomcat的会话复制功能 <br />
+参见 [tomcat-session-redis](https://github.com/bobolau/agile-biz/tree/ofbiz-plus1.0/ofbiz-plus/tomcat-session-redis) <br />
+### redis实现entitycache
+ofbiz集群－通过redis实现entitycache功能（替换通过MQ实现缓存同步功能）<br />
+参见 [entity-cache-redis](https://github.com/bobolau/agile-biz/tree/ofbiz-plus1.0/ofbiz-plus/entity-cache-redis) <br />
 
 1.1 ofbiz docker部署
 ----------------------------------- 
