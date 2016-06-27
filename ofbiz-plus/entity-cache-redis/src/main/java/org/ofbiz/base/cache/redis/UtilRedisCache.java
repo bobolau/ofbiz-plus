@@ -258,11 +258,11 @@ public class UtilRedisCache<K, V>
 		Boolean error = true;
 		try {
 			jedis = acquireRedisConnection();
-			Set<String> keySet = jedis.keys(startwith + "*");
+			Set<byte[]> keySet = jedis.keys((startwith + "*").getBytes());
 			error = false;
 			if (Debug.verboseOn())
 				Debug.logVerbose("redis clear start with key [" + startwith + "]", "redis");
-			for (String kk : keySet) {
+			for (byte[] kk : keySet) {
 				jedis.del(kk);
 			}
 		} finally {
