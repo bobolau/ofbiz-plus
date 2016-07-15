@@ -1,0 +1,22 @@
+apply plugin: 'java'
+
+jar {
+    baseName = 'ofbiz-entity-cache-redis'
+    version =  '1.0'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    compile("javax.servlet:servlet-api:2.5")
+    compile fileTree(dir: '../lib', include: '*.jar')
+    
+    compile fileTree(dir: ofbiz_base+'/framework/base/lib', include: '*.jar')
+    compile fileTree(dir: ofbiz_base+'/framework/base/build/lib', include: '*.jar')
+    compile fileTree(dir: ofbiz_base+'/framework/entity/build/lib', include: '*.jar')     
+    
+
+}
