@@ -19,15 +19,17 @@ ofbiz plus 1.1 (dev)
 提供ofbiz的dockerfile
 ### rest for ofbiz service
 通过spring mvc包装ofbiz服务为rest服务
+参见  /plus/framework/service-rest-spring <br />
 ### auth by OAuth2
 通过spring security oauth提供认证服务
+参见  /plus/framework/security-oauth-spring <br />
 
 ofbiz plus 1.0 (release)
 ----------------------------------- 
 引入redis提供集群扩展功能
 ### redis实现tomcat会话复制
 ofbiz集群－通过redis实现tomcat的会话复制功能 <br />
-参见 [tomcat-session-redis](https://github.com/bobolau/agile-biz/tree/ofbiz-plus1.0/ofbiz-plus/tomcat-session-redis) <br />
+参见 /plus/framework/tomcat-session-redis <br />
 ### redis实现entitycache
 ofbiz集群－通过redis实现entitycache功能（替换通过MQ实现缓存同步功能）<br />
-参见 [entity-cache-redis](https://github.com/bobolau/agile-biz/tree/ofbiz-plus1.0/ofbiz-plus/entity-cache-redis) <br />
+参见  /plus/framework/entity-cache-redis <br />
