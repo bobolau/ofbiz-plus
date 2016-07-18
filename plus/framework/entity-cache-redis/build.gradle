@@ -12,6 +12,7 @@ repositories {
 
 dependencies {
     compile("javax.servlet:servlet-api:2.5")
+    compile fileTree(dir: '../lib/redis', include: '*.jar')
     compile fileTree(dir: '../lib', include: '*.jar')
     
     compile fileTree(dir: ofbiz_base+'/framework/base/lib', include: '*.jar')

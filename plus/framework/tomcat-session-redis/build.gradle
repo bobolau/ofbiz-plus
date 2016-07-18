@@ -18,6 +18,7 @@ configurations{
 
 
 dependencies {
+    compile fileTree(dir: '../lib/redis', include: '*.jar')
     compile fileTree(dir: '../lib', include: '*.jar')
     compile fileTree(dir: ofbiz_base+'/framework/base/lib', include: '*.jar')
     compile fileTree(dir: ofbiz_base+'/framework/base/build/lib', include: '*.jar')
