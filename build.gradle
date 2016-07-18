@@ -1,18 +1,33 @@
-// agileBiz
+// ofbiz plus
 
 ext{
-
 
   //ofbiz config
    //ofbiz_version = '12.04.06' 
    ofbiz_version = '13.07.03'
    ofbiz_download_url = 'http://mirror.bit.edu.cn/apache/ofbiz/apache-ofbiz-'+ofbiz_version+'.zip'
-   root_project_dir = '/Users/bobo/workspace/agile/agile-biz'
-   //root_project_dir = rootProject.projectDir.path
+   root_project_dir = rootProject.projectDir.path
    ofbiz_base = root_project_dir+'/ofbiz/apache-ofbiz-'+ofbiz_version
 }
 
-repositories {
-    mavenCentral()
-    mavenLocal()
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+jar {
+    baseName = 'ofbiz-plus'
+    version =  '1.1'
 }
+
+repositories {
+    jcenter()
+}
+
+
+// In this section you declare the dependencies for your production and test code
+dependencies {
+    // The production code uses the SLF4J logging API at compile time
+    //compile 'org.slf4j:slf4j-api:1.7.12'
+
+    //testCompile 'junit:junit:4.12'
+}
+

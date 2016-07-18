@@ -1,3 +1,18 @@
-include 'ofbiz-plus:tomcat-session-redis', 'ofbiz-plus:entity-cache-redis'
-project(':ofbiz-plus:tomcat-session-redis').name = 'ofbiz-tomcat-session-redis'
-project(':ofbiz-plus:entity-cache-redis').name = 'ofbiz-entity-cache-redis'
+rootProject.name = 'ofbiz-plus'
+
+
+include 'tomcat-session-redis'
+project(':tomcat-session-redis').projectDir = new File(settingsDir, './plus/framework/tomcat-session-redis')
+project(':tomcat-session-redis').name = 'ofbiz-tomcat-session-redis'
+
+include 'entity-cache-redis'
+project(':entity-cache-redis').projectDir = new File(settingsDir, './plus/framework/entity-cache-redis')
+project(':entity-cache-redis').name = 'ofbiz-entity-cache-redis'
+
+include 'service-rest-spring'
+project(':service-rest-spring').projectDir = new File(settingsDir, './plus/framework/service-rest-spring')
+project(':service-rest-spring').name = 'ofbiz-service-rest-spring'
+
+include 'security-oauth-spring'
+project(':security-oauth-spring').projectDir = new File(settingsDir, './plus/framework/security-oauth-spring')
+project(':security-oauth-spring').name = 'ofbiz-security-oauth-spring'
