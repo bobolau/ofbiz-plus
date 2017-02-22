@@ -1,0 +1,44 @@
+nginx:
+  restart: always
+  image: nginx:stable-alpine
+  links:
+    - ofbiz:ofbiz
+  ports:
+    - "7080:80"
+  volumes:
+    - "/data/ofbiz/nginx/conf.d:/etc/nginx/conf.d"
+ofbiz-plus:
+  restart: always
+  #image:
+  build: ./Dockfiles 
+  links:
+    - redis:redis
+    - postgres:postgres
+  ports:
+    - "7280:8080"
+    - "7443:8443"
+  environment:
+    - DEBUG=false
+    - TZ=Asia/Beijing
+  volumes:
+    - /data/ofbiz/framework/entity/config:/usr/src/ofbiz/framework/entity/config
+    - /data/ofbiz/runtime:/usr/src/ofbiz/runtime
+postgres:
+  restart: always
+  image: postgres: 9.6
+  ports:
+    - "7432:5432"
+  volumes:
+    - /data/ofbiz/data/postgre:/var/lib/postgresql/data
+  environment:
+    - POSTGRES_DB=ofbiz
+    - POSTGRES_USER=ofbiz
+    - POSTGRES_PASSWORD=ofbiz
+redis:
+  restart: always
+  image: sameersbn/redis:latest
+  ports:
+    - "6379:6379"
+  volumes:
+    - /data/ofbiz/data/redis:/var/lib/redis
+
